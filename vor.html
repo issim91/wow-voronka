@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Воронка — 3 шага</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f8f9fc 0%, #eef1f8 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    .funnel-container {
+      width: 100%;
+      max-width: 480px;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 2px;
+      margin-bottom: 48px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    /* Steps */
+    .step {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1e293b;
+      text-align: center;
+      margin-bottom: 32px;
+      line-height: 1.4;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      padding: 18px 20px;
+      background: #fff;
+      border: 2px solid #e2e8f0;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 16px;
+      font-weight: 500;
+      color: #334155;
+    }
+
+    .option:hover {
+      border-color: #c7d2fe;
+      background: #faf5ff;
+    }
+
+    .option.selected {
+      border-color: #6366f1;
+      background: #eef2ff;
+      color: #4338ca;
+    }
+
+    .option-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 14px;
+      border-radius: 50%;
+      border: 2px solid currentColor;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .option.selected .option-icon {
+      background: #6366f1;
+      border-color: #6366f1;
+    }
+
+    .option.selected .option-icon::after {
+      content: '';
+      width: 6px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin-bottom: 3px;
+    }
+
+    /* Navigation */
+    .nav-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 16px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-back {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .btn-back:hover {
+      background: #e2e8f0;
+    }
+
+    .btn-next {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+    }
+
+    .btn-next:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-next:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      font-size: 17px;
+      margin-top: 32px;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Payment screen */
+    .payment-screen {
+      display: none;
+      width: 100%;
+      max-width: 420px;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .payment-screen.active {
+      display: block;
+    }
+
+    .payment-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      margin-bottom: 24px;
+    }
+
+    .payment-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .payment-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+
+    .payment-price {
+      font-size: 32px;
+      font-weight: 700;
+      color: #6366f1;
+      margin-bottom: 4px;
+    }
+
+    .payment-price-note {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 16px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    .form-group input::placeholder {
+      color: #94a3b8;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn-pay {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      font-size: 17px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-pay:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    .secure-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .secure-badge::before {
+      content: '🔒';
+    }
+
+    .back-to-funnel {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #64748b;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .back-to-funnel:hover {
+      color: #6366f1;
+    }
+
+    .funnel-container.hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="funnel-container" id="funnelContainer">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width: 33.33%"></div>
+    </div>
+
+    <!-- Шаг 1 -->
+    <div class="step active" data-step="1">
+      <h2 class="step-title">Что вас мотивирует?</h2>
+      <div class="options">
+        <label class="option" data-value="fun">
+          <span class="option-icon"></span>
+          Получать удовольствие
+        </label>
+        <label class="option" data-value="new">
+          <span class="option-icon"></span>
+          Попробовать что-то новое
+        </label>
+        <label class="option" data-value="skills">
+          <span class="option-icon"></span>
+          Развивать навыки
+        </label>
+        <label class="option" data-value="child">
+          <span class="option-icon"></span>
+          Познакомить ребёнка
+        </label>
+      </div>
+    </div>
+
+    <!-- Шаг 2 -->
+    <div class="step" data-step="2">
+      <h2 class="step-title">Какой у вас опыт?</h2>
+      <div class="options">
+        <label class="option" data-value="none">
+          <span class="option-icon"></span>
+          Полный новичок
+        </label>
+        <label class="option" data-value="basic">
+          <span class="option-icon"></span>
+          Базовые знания
+        </label>
+        <label class="option" data-value="intermediate">
+          <span class="option-icon"></span>
+          Средний уровень
+        </label>
+        <label class="option" data-value="advanced">
+          <span class="option-icon"></span>
+          Продвинутый
+        </label>
+      </div>
+    </div>
+
+    <!-- Шаг 3 -->
+    <div class="step" data-step="3">
+      <h2 class="step-title">Сколько времени готовы уделять?</h2>
+      <div class="options">
+        <label class="option" data-value="5">
+          <span class="option-icon"></span>
+          5 минут в день
+        </label>
+        <label class="option" data-value="15">
+          <span class="option-icon"></span>
+          15 минут в день
+        </label>
+        <label class="option" data-value="30">
+          <span class="option-icon"></span>
+          30 минут в день
+        </label>
+        <label class="option" data-value="60">
+          <span class="option-icon"></span>
+          Час и больше
+        </label>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button type="button" class="btn btn-back hidden" id="btnBack">Назад</button>
+      <button type="button" class="btn btn-next" id="btnNext" disabled>Далее</button>
+    </div>
+
+    <button type="button" class="btn btn-submit hidden" id="btnSubmit">Завершить</button>
+  </div>
+
+  <!-- Экран оплаты -->
+  <div class="payment-screen" id="paymentScreen">
+    <div class="payment-card">
+      <h2 class="payment-title">Премиум подписка</h2>
+      <p class="payment-subtitle">Полный доступ ко всем урокам</p>
+      <div class="payment-price">990 ₽ <span style="font-size: 16px; font-weight: 500; color: #94a3b8;">/мес</span></div>
+      <p class="payment-price-note">Первый месяц — 1 ₽, затем 990 ₽/мес. Отмена в любой момент.</p>
+
+      <form id="paymentForm">
+        <div class="form-group">
+          <label>Номер карты</label>
+          <input type="text" placeholder="0000 0000 0000 0000" maxlength="19" id="cardNumber">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Срок действия</label>
+            <input type="text" placeholder="MM/YY" maxlength="5" id="cardExpiry">
+          </div>
+          <div class="form-group">
+            <label>CVV</label>
+            <input type="text" placeholder="123" maxlength="4" id="cardCvv">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Имя на карте</label>
+          <input type="text" placeholder="IVAN IVANOV" id="cardName">
+        </div>
+        <button type="submit" class="btn-pay">Оплатить 1 ₽</button>
+      </form>
+
+      <div class="secure-badge">Безопасная оплата</div>
+    </div>
+    <a href="#" class="back-to-funnel" id="backToFunnel">← Вернуться к вопросам</a>
+  </div>
+
+  <script>
+    const steps = document.querySelectorAll('.step');
+    const progressFill = document.getElementById('progressFill');
+    const btnBack = document.getElementById('btnBack');
+    const btnNext = document.getElementById('btnNext');
+    const btnSubmit = document.getElementById('btnSubmit');
+
+    let currentStep = 1;
+    const answers = {};
+
+    function showStep(stepNum) {
+      steps.forEach(s => s.classList.remove('active'));
+      const step = document.querySelector(`.step[data-step="${stepNum}"]`);
+      if (step) step.classList.add('active');
+
+      progressFill.style.width = `${(stepNum / 3) * 100}%`;
+
+      btnBack.classList.toggle('hidden', stepNum === 1);
+      btnNext.classList.toggle('hidden', stepNum === 3);
+      btnSubmit.classList.toggle('hidden', stepNum !== 3);
+
+      updateNextButton(stepNum);
+    }
+
+    function updateNextButton(stepNum) {
+      const step = document.querySelector(`.step[data-step="${stepNum}"]`);
+      const selected = step?.querySelector('.option.selected');
+      if (stepNum < 3) {
+        btnNext.disabled = !selected;
+      } else {
+        btnSubmit.disabled = !selected;
+      }
+    }
+
+    steps.forEach(step => {
+      step.querySelectorAll('.option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          step.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+          answers[step.dataset.step] = opt.dataset.value;
+          updateNextButton(parseInt(step.dataset.step));
+        });
+      });
+    });
+
+    btnBack.addEventListener('click', () => {
+      if (currentStep > 1) {
+        currentStep--;
+        showStep(currentStep);
+      }
+    });
+
+    btnNext.addEventListener('click', () => {
+      if (currentStep < 3) {
+        currentStep++;
+        showStep(currentStep);
+      }
+    });
+
+    btnSubmit.addEventListener('click', () => {
+      console.log('Ответы:', answers);
+      document.getElementById('funnelContainer').classList.add('hidden');
+      document.getElementById('paymentScreen').classList.add('active');
+    });
+
+    document.getElementById('backToFunnel').addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('paymentScreen').classList.remove('active');
+      document.getElementById('funnelContainer').classList.remove('hidden');
+    });
+
+    // Форматирование номера карты
+    document.getElementById('cardNumber').addEventListener('input', (e) => {
+      let v = e.target.value.replace(/\D/g, '');
+      v = v.replace(/(\d{4})(?=\d)/g, '$1 ');
+      e.target.value = v.substring(0, 19);
+    });
+
+    document.getElementById('cardExpiry').addEventListener('input', (e) => {
+      let v = e.target.value.replace(/\D/g, '');
+      if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2);
+      e.target.value = v.substring(0, 5);
+    });
+
+    document.getElementById('cardCvv').addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+    });
+
+    document.getElementById('paymentForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      alert('Это демо-страница. Оплата не производится.');
+    });
+
+    showStep(1);
+  </script>
+</body>
+</html>
